@@ -5,156 +5,250 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Ayudas - Centro de Acopio</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; }
-        label { font-weight: bold; display: block; margin-top: 15px; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; border: none; font-size: 16px; cursor: pointer; margin-top: 20px; padding: 15px; }
-        button:hover { background-color: #218838; }
-        .hidden { display: none; }
+        h2, h3 { text-align: center; color: #333; }
+        label { font-weight: bold; display: block; margin-top: 15px; color: #555;}
+        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px;}
+        
+        /* Botones de Categoría */
+        .btn-categoria { background-color: #007bff; color: white; border: none; cursor: pointer; margin-bottom: 10px; font-weight: bold; transition: 0.3s; }
+        .btn-categoria:hover { background-color: #0056b3; }
+        
+        /* Botones de Acción */
+        .btn-guardar { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 25px; }
+        .btn-guardar:hover { background-color: #218838; }
+        .btn-volver { background-color: #6c757d; color: white; border: none; cursor: pointer; margin-bottom: 15px; }
+        
+        .hidden { display: none !important; }
         .cargando { background-color: #ccc !important; cursor: not-allowed; }
+        
+        .flex-row { display: flex; gap: 10px; }
+        .flex-row > div { width: 50%; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📦 Registro de Inventario</h2>
-    <form id="formularioAcopio">
-        
-        <label>Tipo de Movimiento:</label>
-        <select id="movimiento" required>
-            <option value="Entrada">Entrada (Recibir donación)</option>
-            <option value="Salida">Salida (Entregar ayuda)</option>
-        </select>
+    <h2>📦 Centro de Acopio</h2>
 
-        <label>Categoría:</label>
-        <select id="categoria" onchange="verificarCategoria()" required>
-            <option value="">Seleccione...</option>
-            <option value="Alimentos">Alimentos</option>
-            <option value="Medicamentos">Medicamentos</option>
-            <option value="Agua">Agua</option>
-            <option value="Higiene y aseo">Higiene y aseo</option>
-            <option value="Ropa y cobijas">Ropa y cobijas</option>
-        </select>
+    <!-- PANTALLA 1: SELECCIÓN DE CATEGORÍA -->
+    <div id="pantalla1">
+        <h3>¿Qué vas a registrar?</h3>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Alimentos')">🍎 Alimentos</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Medicamentos')">💊 Medicamentos</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Higiene y aseo')">🧼 Higiene y Aseo</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Ropa y cobijas')">👕 Ropa y Cobijas</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Agua')">💧 Agua</button>
+    </div>
 
-        <!-- Casilla especial para alimentos -->
-        <div id="divEnlatado" class="hidden">
-            <label><input type="checkbox" id="esEnlatado" style="width: auto;"> Este producto es un enlatado</label>
-        </div>
+    <!-- PANTALLA 2: FORMULARIO -->
+    <div id="pantalla2" class="hidden">
+        <button class="btn-volver" onclick="volverPantalla1()">⬅ Volver a categorías</button>
+        <h3 id="tituloCategoria" style="color: #007bff;"></h3>
 
-        <label>Elemento (Ej. Arroz, Atún, Paracetamol):</label>
-        <input type="text" id="elemento" required>
+        <form id="formularioAcopio">
+            
+            <label>Tipo de Movimiento:</label>
+            <select id="movimiento" required>
+                <option value="Entrada">Entrada (Recibir donación)</option>
+                <option value="Salida">Salida (Entregar ayuda)</option>
+            </select>
 
-        <div style="display: flex; gap: 10px;">
-            <div style="width: 50%;">
-                <label>Cantidad:</label>
-                <input type="number" id="cantidad" min="1" required>
+            <!-- Oculto para lógica interna -->
+            <input type="hidden" id="categoriaSeleccionada">
+
+            <div id="divEnlatado" class="hidden">
+                <label style="background: #e9ecef; padding: 10px; border-radius: 5px;">
+                    <input type="checkbox" id="esEnlatado" onchange="gestionarVencimiento()" style="width: auto;"> 🥫 ¿Este producto es un enlatado?
+                </label>
             </div>
-            <div style="width: 50%;">
-                <label>Unidad:</label>
-                <select id="unidad" required>
-                    <option value="unidad">Unidad</option>
-                    <option value="kg">Kg</option>
-                    <option value="L">Litros</option>
-                    <option value="caja">Caja</option>
-                    <option value="paquete">Paquete</option>
-                </select>
+
+            <label>Elemento (Ej. Arroz, Paracetamol, Camisas):</label>
+            <input type="text" id="elemento" required>
+
+            <hr style="margin-top: 20px; border: 0.5px solid #eee;">
+            <h4 style="margin-bottom: 0;">Detalles de Empaquetado</h4>
+
+            <div class="flex-row">
+                <div>
+                    <label>Tipo de Empaque:</label>
+                    <select id="tipoEmpaque" onchange="verificarOtroEmpaque()" required>
+                        <option value="Caja">Caja</option>
+                        <option value="Costal">Costal</option>
+                        <option value="Bolsa">Bolsa</option>
+                        <option value="Unidad suelta">Unidad suelta</option>
+                        <option value="Otro">Otro...</option>
+                    </select>
+                </div>
+                <div id="divOtroEmpaque" class="hidden">
+                    <label>¿Cuál?</label>
+                    <input type="text" id="otroEmpaque" placeholder="Ej. Paca">
+                </div>
             </div>
-        </div>
 
-        <label>Fecha de Vencimiento:</label>
-        <input type="date" id="fechaVencimiento" required>
+            <div class="flex-row">
+                <div>
+                    <label>Cantidad (Unidades):</label>
+                    <input type="number" id="unidades" placeholder="Ej. 24" min="1" required>
+                </div>
+                <div>
+                    <label>Medida:</label>
+                    <input type="text" id="medida" placeholder="Ej. kg, gramos, L..." required>
+                </div>
+            </div>
+            <hr style="border: 0.5px solid #eee;">
 
-        <label>Responsable (Quién registra esto):</label>
-        <input type="text" id="responsable" placeholder="Tu nombre o documento" required>
+            <div id="divVencimiento" class="hidden">
+                <label style="color: #d9534f;">Fecha de Vencimiento:</label>
+                <input type="date" id="fechaVencimiento" onchange="verificar3Meses()">
+            </div>
 
-        <label>Observaciones (Opcional):</label>
-        <input type="text" id="observaciones">
+            <label>Responsable (Tu nombre/ID):</label>
+            <input type="text" id="responsable" required>
 
-        <button type="submit" id="btnGuardar">Guardar Registro</button>
-    </form>
+            <label>Observaciones (Opcional):</label>
+            <input type="text" id="observaciones">
+
+            <button type="submit" id="btnGuardar" class="btn-guardar">💾 Guardar Registro</button>
+        </form>
+    </div>
 </div>
 
 <script>
-    // URL que generaste en Google Apps Script
+    // URL DE TU GOOGLE SCRIPT (Asegúrate de pegar la tuya aquí)
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz268H9EbYUUp-aDNOiy6USxqcT-b5GHkNSI9KXCgXYlL7MleihZhRLfxmHH3OzHIxs/exec';
 
-    // Mostrar u ocultar la opción de enlatado si eligen Alimentos
-    function verificarCategoria() {
-        const cat = document.getElementById('categoria').value;
+    // NAVEGACIÓN ENTRE PANTALLAS
+    function seleccionarCategoria(cat) {
+        document.getElementById('pantalla1').classList.add('hidden');
+        document.getElementById('pantalla2').classList.remove('hidden');
+        
+        document.getElementById('tituloCategoria').innerText = "Registro: " + cat;
+        document.getElementById('categoriaSeleccionada').value = cat;
+
+        // Limpiar formulario al entrar
+        document.getElementById('formularioAcopio').reset();
+        
+        // Mostrar lógica especial según categoría
         const divEnlatado = document.getElementById('divEnlatado');
+        const divVencimiento = document.getElementById('divVencimiento');
+        const inputVencimiento = document.getElementById('fechaVencimiento');
+
         if (cat === 'Alimentos') {
             divEnlatado.classList.remove('hidden');
+            divVencimiento.classList.add('hidden');
+            inputVencimiento.required = false;
+        } else if (cat === 'Medicamentos') {
+            divEnlatado.classList.add('hidden');
+            divVencimiento.classList.remove('hidden');
+            inputVencimiento.required = true;
         } else {
             divEnlatado.classList.add('hidden');
-            document.getElementById('esEnlatado').checked = false;
+            divVencimiento.classList.add('hidden');
+            inputVencimiento.required = false;
         }
     }
 
+    function volverPantalla1() {
+        document.getElementById('pantalla2').classList.add('hidden');
+        document.getElementById('pantalla1').classList.remove('hidden');
+    }
+
+    // LÓGICA DE EMPAQUE (Mostrar campo "Otro")
+    function verificarOtroEmpaque() {
+        const tipo = document.getElementById('tipoEmpaque').value;
+        const divOtro = document.getElementById('divOtroEmpaque');
+        if(tipo === 'Otro') {
+            divOtro.classList.remove('hidden');
+            document.getElementById('otroEmpaque').required = true;
+        } else {
+            divOtro.classList.add('hidden');
+            document.getElementById('otroEmpaque').required = false;
+        }
+    }
+
+    // MOSTRAR VENCIMIENTO SI ES ENLATADO
+    function gestionarVencimiento() {
+        const esEnlatado = document.getElementById('esEnlatado').checked;
+        const divVencimiento = document.getElementById('divVencimiento');
+        const inputVencimiento = document.getElementById('fechaVencimiento');
+
+        if(esEnlatado) {
+            divVencimiento.classList.remove('hidden');
+            inputVencimiento.required = true;
+        } else {
+            divVencimiento.classList.add('hidden');
+            inputVencimiento.required = false;
+            inputVencimiento.value = ""; // Limpiar si se desmarca
+        }
+    }
+
+    // VERIFICACIÓN AUTOMÁTICA DE 3 MESES
+    function verificar3Meses() {
+        const fechaInput = document.getElementById('fechaVencimiento').value;
+        if(!fechaInput) return;
+
+        const fechaSeleccionada = new Date(fechaInput);
+        const hoy = new Date();
+        const tresMesesDespues = new Date(hoy.setMonth(hoy.getMonth() + 3));
+
+        if (fechaSeleccionada <= tresMesesDespues) {
+            alert("❌ ATENCIÓN: El producto vence en menos de 3 meses. NO ES POSIBLE INVENTARIAR ESTOS EQUIPOS/PRODUCTOS.");
+            document.getElementById('fechaVencimiento').value = ""; // Borra la fecha incorrecta
+        }
+    }
+
+    // ENVÍO DE DATOS
     document.getElementById('formularioAcopio').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 1. LÓGICA DE VALIDACIÓN DE ENLATADOS (MAYOR A 3 MESES)
-        const esEnlatado = document.getElementById('esEnlatado').checked;
-        const inputFechaVencimiento = document.getElementById('fechaVencimiento').value;
-        
-        if (esEnlatado && inputFechaVencimiento) {
-            const fechaVencimiento = new Date(inputFechaVencimiento);
-            const hoy = new Date();
-            // Le sumamos 3 meses a la fecha de hoy
-            const tresMesesDespues = new Date(hoy.setMonth(hoy.getMonth() + 3));
-            
-            if (fechaVencimiento <= tresMesesDespues) {
-                alert("❌ ATENCIÓN: El producto es un enlatado y vence en menos de 3 meses. Por protocolo de seguridad, no se puede recibir en el Centro de Acopio.");
-                return; // Detiene el envío
-            }
+        // Generar ID de máximo 4 dígitos (0001 a 9999)
+        const idCorto = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // Determinar el empaque final
+        let empaqueFinal = document.getElementById('tipoEmpaque').value;
+        if(empaqueFinal === 'Otro') {
+            empaqueFinal = document.getElementById('otroEmpaque').value;
         }
 
-        // 2. CAMBIAR ESTADO DEL BOTÓN MIENTRAS ENVÍA
+        const cat = document.getElementById('categoriaSeleccionada').value;
+        const esEnlatado = document.getElementById('esEnlatado').checked;
+        const sufijoElemento = (cat === 'Alimentos' && esEnlatado) ? " (Enlatado)" : "";
+
+        // Cambiar estado del botón
         const boton = document.getElementById('btnGuardar');
-        boton.textContent = 'Guardando...';
+        boton.textContent = '⏳ Guardando...';
         boton.classList.add('cargando');
         boton.disabled = true;
 
-        // 3. GENERAR ID ÚNICO Y FECHAS
-        const idUnico = 'REG-' + Date.now();
-        const fechaActual = new Date().toLocaleDateString('es-CO');
-        const horaActual = new Date().toLocaleTimeString('es-CO');
-
-        // 4. RECOPILAR DATOS PARA ENVIAR
         const datos = {
-            id: idUnico,
-            fecha: fechaActual,
-            hora: horaActual,
+            id: idCorto,
+            fecha: new Date().toLocaleDateString('es-CO'),
+            hora: new Date().toLocaleTimeString('es-CO'),
             movimiento: document.getElementById('movimiento').value,
-            categoria: document.getElementById('categoria').value,
-            elemento: document.getElementById('elemento').value + (esEnlatado ? " (Enlatado)" : ""),
-            cantidad: document.getElementById('cantidad').value,
-            unidad: document.getElementById('unidad').value,
-            fecha_vencimiento: inputFechaVencimiento,
+            categoria: cat,
+            elemento: document.getElementById('elemento').value + sufijoElemento,
+            tipo_empaque: empaqueFinal,
+            unidades_internas: document.getElementById('unidades').value,
+            medida_empaque: document.getElementById('medida').value,
+            fecha_vencimiento: document.getElementById('fechaVencimiento').value || "N/A",
             responsable: document.getElementById('responsable').value,
             observaciones: document.getElementById('observaciones').value
         };
 
-        // 5. ENVIAR DATOS A GOOGLE SHEETS
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Evita bloqueos de seguridad del navegador al enviar a Google
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
         }).then(() => {
-            alert("✅ Registro guardado exitosamente.\nID: " + idUnico);
-            document.getElementById('formularioAcopio').reset();
-            verificarCategoria();
+            alert("✅ Registro guardado. ID asignado: " + idCorto);
+            volverPantalla1();
         }).catch(error => {
-            console.error('Error:', error);
-            alert("❌ Hubo un error al guardar. Revisa tu conexión a internet.");
+            alert("❌ Error al guardar. Revisa el internet.");
         }).finally(() => {
-            // Restaurar el botón
-            boton.textContent = 'Guardar Registro';
+            boton.textContent = '💾 Guardar Registro';
             boton.classList.remove('cargando');
             boton.disabled = false;
         });
