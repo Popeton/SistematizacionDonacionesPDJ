@@ -268,7 +268,7 @@
         contenedor.appendChild(nuevaFila);
     }
 
-    // ENVÍO DE DATOS CORREGIDO PARA EXCEL
+    // ENVÍO DE DATOS EN BLOQUE A GOOGLE SHEETS
     document.getElementById('formularioAcopio').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -308,7 +308,7 @@
                         fecha: new Date().toLocaleDateString('es-CO'),
                         hora: new Date().toLocaleTimeString('es-CO'),
                         categoria: cat,
-                        elemento: elementoNombre + ` (Dentro de 1 ${empaqueFinal})`, // Aclaración en Excel
+                        elemento: elementoNombre + ` (Dentro de 1 ${empaqueFinal})`, 
                         tipo_empaque: empaqueFinal,
                         unidades_internas: Number(cants[i].value), // ENVIAMOS NÚMERO PURO A LA CELDA
                         medida_empaque: meds[i].value,
@@ -326,7 +326,7 @@
                 categoria: cat,
                 elemento: elementoNombre,
                 tipo_empaque: empaqueFinal,
-                unidades_internas: Number(document.getElementById('unidades').value), // NÚMERO PURO
+                unidades_internas: Number(document.getElementById('unidades').value), // ENVIAMOS NÚMERO PURO A LA CELDA
                 medida_empaque: document.getElementById('medida').value,
                 fecha_vencimiento: fechaVencFinal,
                 responsable: responsableNombre,
@@ -339,16 +339,14 @@
         boton.classList.add('cargando');
         boton.disabled = true;
 
-        // Enviar todos los registros uno por uno a Google Sheets
+        // Enviar todos los registros en un solo viaje
         try {
-            for (let i = 0; i < registrosAEnviar.length; i++) {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(registrosAEnviar[i])
-                });
-            }
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(registrosAEnviar)
+            });
             alert("✅ Registro guardado. ID asignado: " + idCorto);
             volverPantalla1();
         } catch(error) {
