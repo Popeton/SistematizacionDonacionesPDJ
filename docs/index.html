@@ -70,26 +70,9 @@
                 </div>
             </div>
 
-            <!-- ELEMENTO CON AUTOSUGERENCIAS Y RESTRICCIÓN DE SOLO LETRAS -->
+            <!-- ELEMENTO (Sin autocompletado, solo letras) -->
             <label>Elemento a registrar:</label>
-            <input type="text" id="elemento" list="" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" placeholder="Escribe o selecciona de la lista..." autocomplete="off" required>
-            
-            <!-- Listas dinámicas ocultas -->
-            <datalist id="listaAlimentos">
-                <option value="Arroz"><option value="Frijoles"><option value="Lentejas"><option value="Atún"><option value="Aceite"><option value="Panela"><option value="Sal"><option value="Azúcar"><option value="Harina"><option value="Pastas">
-            </datalist>
-            <datalist id="listaMedicamentos">
-                <option value="Paracetamol"><option value="Ibuprofeno"><option value="Alcohol"><option value="Gasa"><option value="Suero"><option value="Algodón"><option value="Curitas"><option value="Tapabocas">
-            </datalist>
-            <datalist id="listaHigiene">
-                <option value="Jabón de baño"><option value="Papel higiénico"><option value="Cepillo de dientes"><option value="Crema dental"><option value="Toallas higiénicas"><option value="Desodorante"><option value="Pañales">
-            </datalist>
-            <datalist id="listaCobijas">
-                <option value="Cobija térmica"><option value="Carpa 2 personas"><option value="Carpa familiar"><option value="Colchoneta"><option value="Saco de dormir"><option value="Manta">
-            </datalist>
-            <datalist id="listaAgua">
-                <option value="Botella de agua (pequeña)"><option value="Garrafón"><option value="Bolsa de agua"><option value="Paca de agua">
-            </datalist>
+            <input type="text" id="elemento" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" placeholder="Escribe el nombre del producto..." required>
 
             <hr style="margin-top: 20px; border: 0.5px solid #eee;">
             <h4 style="margin-bottom: 0;">Detalles de Empaquetado</h4>
@@ -111,10 +94,10 @@
                 </div>
             </div>
 
-            <!-- CHECKBOX PARA EMPAQUE MÚLTIPLE -->
+            <!-- CHECKBOX PARA EMPAQUE MÚLTIPLE ACTUALIZADO -->
             <label style="margin-top: 15px; font-weight: normal;">
                 <input type="checkbox" id="esMultiple" onchange="gestionarCantidades()" style="width: auto;"> 
-                📦 ¿Este empaque contiene varias medidas adentro? (Ej: 1 caja con arroz, frijoles, etc.)
+                📦 Tienes un solo empaque con varias medidas
             </label>
 
             <!-- CONTENEDOR SIMPLE (1 sola medida) -->
@@ -179,31 +162,21 @@
         
         const divEnlatado = document.getElementById('divEnlatado');
         const divVencimientoMed = document.getElementById('divVencimientoMed');
-        const inputElemento = document.getElementById('elemento');
 
-        // Asignar datalist dinámico
+        // Configuración por categoría
         if (cat === 'Alimentos') {
-            inputElemento.setAttribute('list', 'listaAlimentos');
             divEnlatado.classList.remove('hidden');
             divVencimientoMed.classList.add('hidden');
             document.getElementById('fechaVencimientoMed').required = false;
         } else if (cat === 'Medicamentos') {
-            inputElemento.setAttribute('list', 'listaMedicamentos');
             divEnlatado.classList.add('hidden');
             divVencimientoMed.classList.remove('hidden');
             document.getElementById('fechaVencimientoMed').required = true;
-        } else if (cat === 'Higiene y aseo') {
-            inputElemento.setAttribute('list', 'listaHigiene');
+        } else {
+            // Para Higiene, Cobijas y Agua
             divEnlatado.classList.add('hidden');
             divVencimientoMed.classList.add('hidden');
-        } else if (cat === 'Cobijas y Carpas') {
-            inputElemento.setAttribute('list', 'listaCobijas');
-            divEnlatado.classList.add('hidden');
-            divVencimientoMed.classList.add('hidden');
-        } else if (cat === 'Agua') {
-            inputElemento.setAttribute('list', 'listaAgua');
-            divEnlatado.classList.add('hidden');
-            divVencimientoMed.classList.add('hidden');
+            document.getElementById('fechaVencimientoMed').required = false;
         }
     }
 
