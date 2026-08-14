@@ -23,7 +23,6 @@
         .cargando { background-color: #ccc !important; cursor: not-allowed; }
         
         .flex-row { display: flex; gap: 10px; align-items: center; }
-        .flex-row > div { width: 50%; }
         .alerta-roja { color: #d9534f; font-weight: bold; margin-top: 10px; background: #fdf2f2; padding: 10px; border-radius: 5px; border: 1px solid #d9534f;}
     </style>
 </head>
@@ -31,6 +30,9 @@
 
 <div class="container">
     <h2>🤝 Juntanza Cultural Solidaria</h2>
+    
+    <!-- BOTÓN PARA IR A LA PÁGINA DE CONSULTA -->
+    <a href="https://popeton.github.io/SistematizacionDonacionesPDJ/consulta.html" style="display: block; text-align: center; background-color: #17a2b8; color: white; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-bottom: 20px;">🔍 Buscar un Empaque</a>
 
     <!-- PANTALLA 1: CATEGORÍAS -->
     <div id="pantalla1">
@@ -58,9 +60,9 @@
                 </label>
             </div>
 
-            <!-- PREGUNTA CONDICIONAL DE VENCIMIENTO PARA ENLATADOS -->
+            <!-- PREGUNTA UNIFICADA DE VENCIMIENTO (Para Enlatados y Medicamentos) -->
             <div id="divPreguntaVencimiento" class="hidden" style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 10px;">
-                <label>⚠️ ¿Este enlatado se vence en los próximos 3 meses?</label>
+                <label>⚠️ ¿Este producto se vence en los próximos 3 meses?</label>
                 <select id="vencePronto" onchange="bloquearSiVence()">
                     <option value="No">No, le queda más tiempo (Seguro)</option>
                     <option value="Sí">Sí, vence en menos de 3 meses (Rechazar)</option>
@@ -70,7 +72,7 @@
                 </div>
             </div>
 
-            <!-- ELEMENTO (Sin autocompletado, solo letras) -->
+            <!-- ELEMENTO -->
             <label>Elemento a registrar:</label>
             <input type="text" id="elemento" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" placeholder="Escribe el nombre del producto..." required>
 
@@ -78,7 +80,7 @@
             <h4 style="margin-bottom: 0;">Detalles de Empaquetado</h4>
 
             <div class="flex-row">
-                <div>
+                <div style="width: 50%;">
                     <label>Tipo de Empaque:</label>
                     <select id="tipoEmpaque" onchange="verificarOtroEmpaque()" required>
                         <option value="Caja">Caja</option>
@@ -88,49 +90,43 @@
                         <option value="Otro">Otro...</option>
                     </select>
                 </div>
-                <div id="divOtroEmpaque" class="hidden">
+                <div id="divOtroEmpaque" class="hidden" style="width: 50%;">
                     <label>¿Cuál?</label>
                     <input type="text" id="otroEmpaque" placeholder="Ej. Paca">
                 </div>
             </div>
 
-            <!-- CHECKBOX PARA EMPAQUE MÚLTIPLE ACTUALIZADO -->
+            <!-- CHECKBOX PARA EMPAQUE MÚLTIPLE -->
             <label style="margin-top: 15px; font-weight: normal;">
                 <input type="checkbox" id="esMultiple" onchange="gestionarCantidades()" style="width: auto;"> 
                 📦 Tienes un solo empaque con varias medidas
             </label>
 
-            <!-- CONTENEDOR SIMPLE (1 sola medida) -->
+            <!-- CONTENEDOR SIMPLE -->
             <div id="contenedorSimple" class="flex-row" style="margin-top: 10px;">
-                <div>
+                <div id="divCantSimple" style="width: 50%;">
                     <label>Cantidad:</label>
                     <input type="number" id="unidades" placeholder="Ej. 24" min="1">
                 </div>
-                <div>
+                <div id="divMedidaSimple" style="width: 50%;">
                     <label>Medida por unidad:</label>
                     <input type="text" id="medida" placeholder="Medidas de cada unidad">
                 </div>
             </div>
 
-            <!-- CONTENEDOR MÚLTIPLE (Varias medidas) -->
+            <!-- CONTENEDOR MÚLTIPLE -->
             <div id="contenedorMultiple" class="hidden" style="margin-top: 10px; padding: 10px; background: #e9ecef; border-radius: 5px;">
-                <label>Detalla las cantidades y medidas que van adentro:</label>
+                <label>Detalla las cantidades (y medidas) que van adentro:</label>
                 <div id="listaMultiples">
                     <div class="flex-row fila-multiple" style="margin-top: 5px;">
-                        <div><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
-                        <div><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
+                        <div class="col-cant" style="width: 50%;"><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
+                        <div class="col-med" style="width: 50%;"><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
                     </div>
                 </div>
                 <button type="button" class="btn-agregar-fila" onclick="agregarFilaMultiple()">+ Añadir otro producto al empaque</button>
             </div>
 
             <hr style="border: 0.5px solid #eee;">
-
-            <!-- VENCIMIENTO EXACTO (Solo para Medicamentos) -->
-            <div id="divVencimientoMed" class="hidden">
-                <label style="color: #d9534f;">Fecha de Vencimiento del Medicamento:</label>
-                <input type="date" id="fechaVencimientoMed" onchange="verificarVencimientoMedicamento()">
-            </div>
 
             <label>Responsable:</label>
             <input type="text" id="responsable" placeholder="Tu nombre" required>
@@ -156,25 +152,38 @@
         
         document.getElementById('btnGuardar').disabled = false;
         document.getElementById('alertaVencimiento').classList.add('hidden');
-        document.getElementById('divPreguntaVencimiento').classList.add('hidden');
-        gestionarCantidades();
+        document.getElementById('vencePronto').value = "No"; 
         
         const divEnlatado = document.getElementById('divEnlatado');
-        const divVencimientoMed = document.getElementById('divVencimientoMed');
+        const divPreguntaVencimiento = document.getElementById('divPreguntaVencimiento');
 
+        // LÓGICA DE OCULTAR MEDIDAS PARA MEDICAMENTOS
+        if (cat === 'Medicamentos') {
+            document.getElementById('divMedidaSimple').classList.add('hidden');
+            document.getElementById('divCantSimple').style.width = '100%';
+            document.querySelectorAll('.col-med').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.col-cant').forEach(el => el.style.width = '100%');
+            document.getElementById('medida').required = false;
+        } else {
+            document.getElementById('divMedidaSimple').classList.remove('hidden');
+            document.getElementById('divCantSimple').style.width = '50%';
+            document.querySelectorAll('.col-med').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.col-cant').forEach(el => el.style.width = '50%');
+        }
+
+        // LÓGICA DE VENCIMIENTOS
         if (cat === 'Alimentos') {
             divEnlatado.classList.remove('hidden');
-            divVencimientoMed.classList.add('hidden');
-            document.getElementById('fechaVencimientoMed').required = false;
+            divPreguntaVencimiento.classList.add('hidden');
         } else if (cat === 'Medicamentos') {
             divEnlatado.classList.add('hidden');
-            divVencimientoMed.classList.remove('hidden');
-            document.getElementById('fechaVencimientoMed').required = true;
+            divPreguntaVencimiento.classList.remove('hidden'); // Siempre preguntar vencimiento en medicamentos
         } else {
             divEnlatado.classList.add('hidden');
-            divVencimientoMed.classList.add('hidden');
-            document.getElementById('fechaVencimientoMed').required = false;
+            divPreguntaVencimiento.classList.add('hidden');
         }
+
+        gestionarCantidades();
     }
 
     function volverPantalla1() {
@@ -222,26 +231,13 @@
         }
     }
 
-    function verificarVencimientoMedicamento() {
-        const fechaInput = document.getElementById('fechaVencimientoMed').value;
-        if(!fechaInput) return;
-
-        const fechaSeleccionada = new Date(fechaInput);
-        const hoy = new Date();
-        const tresMesesDespues = new Date(hoy.setMonth(hoy.getMonth() + 3));
-
-        if (fechaSeleccionada <= tresMesesDespues) {
-            alert("❌ ATENCIÓN: El medicamento vence en menos de 3 meses. NO ES POSIBLE INVENTARIAR ESTE PRODUCTO.");
-            document.getElementById('fechaVencimientoMed').value = ""; 
-        }
-    }
-
     function gestionarCantidades() {
         const esMultiple = document.getElementById('esMultiple').checked;
         const divSimple = document.getElementById('contenedorSimple');
         const divMultiple = document.getElementById('contenedorMultiple');
         const inputUnidadSimple = document.getElementById('unidades');
         const inputMedidaSimple = document.getElementById('medida');
+        const cat = document.getElementById('categoriaSeleccionada').value;
 
         if(esMultiple) {
             divSimple.classList.add('hidden');
@@ -252,18 +248,21 @@
             divSimple.classList.remove('hidden');
             divMultiple.classList.add('hidden');
             inputUnidadSimple.required = true;
-            inputMedidaSimple.required = true;
+            if(cat !== 'Medicamentos') inputMedidaSimple.required = true;
         }
     }
 
     function agregarFilaMultiple() {
+        const cat = document.getElementById('categoriaSeleccionada').value;
+        const esMeds = (cat === 'Medicamentos');
+        
         const contenedor = document.getElementById('listaMultiples');
         const nuevaFila = document.createElement('div');
         nuevaFila.className = 'flex-row fila-multiple';
         nuevaFila.style.marginTop = '5px';
         nuevaFila.innerHTML = `
-            <div><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
-            <div><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
+            <div class="col-cant" style="width: ${esMeds ? '100%' : '50%'};"><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
+            <div class="col-med ${esMeds ? 'hidden' : ''}" style="width: 50%;"><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
         `;
         contenedor.appendChild(nuevaFila);
     }
@@ -285,16 +284,13 @@
         const elementoNombre = document.getElementById('elemento').value + sufijoElemento;
 
         let fechaVencFinal = "N/A";
-        if (cat === 'Medicamentos') {
-            fechaVencFinal = document.getElementById('fechaVencimientoMed').value;
-        } else if (cat === 'Alimentos' && esEnlatado) {
+        if (cat === 'Medicamentos' || (cat === 'Alimentos' && esEnlatado)) {
             fechaVencFinal = "Vence en más de 3 meses"; 
         }
 
         const responsableNombre = document.getElementById('responsable').value;
         const observacionesTexto = document.getElementById('observaciones').value;
 
-        // Crear una lista de registros para enviar (1 si es simple, varios si es múltiple)
         let registrosAEnviar = [];
 
         if (document.getElementById('esMultiple').checked) {
@@ -302,7 +298,8 @@
             const meds = document.querySelectorAll('.multi-med');
             
             for(let i=0; i<cants.length; i++) {
-                if(cants[i].value && meds[i].value) {
+                // Permitir omitir la medida si son medicamentos
+                if(cants[i].value && (meds[i].value || cat === 'Medicamentos')) {
                     registrosAEnviar.push({
                         id: idCorto,
                         fecha: new Date().toLocaleDateString('es-CO'),
@@ -310,8 +307,8 @@
                         categoria: cat,
                         elemento: elementoNombre + ` (Dentro de 1 ${empaqueFinal})`, 
                         tipo_empaque: empaqueFinal,
-                        unidades_internas: Number(cants[i].value), // ENVIAMOS NÚMERO PURO A LA CELDA
-                        medida_empaque: meds[i].value,
+                        unidades_internas: Number(cants[i].value), 
+                        medida_empaque: (cat === 'Medicamentos') ? "N/A" : meds[i].value, // Fuerza N/A
                         fecha_vencimiento: fechaVencFinal,
                         responsable: responsableNombre,
                         observaciones: observacionesTexto
@@ -326,8 +323,8 @@
                 categoria: cat,
                 elemento: elementoNombre,
                 tipo_empaque: empaqueFinal,
-                unidades_internas: Number(document.getElementById('unidades').value), // ENVIAMOS NÚMERO PURO A LA CELDA
-                medida_empaque: document.getElementById('medida').value,
+                unidades_internas: Number(document.getElementById('unidades').value),
+                medida_empaque: (cat === 'Medicamentos') ? "N/A" : document.getElementById('medida').value, // Fuerza N/A
                 fecha_vencimiento: fechaVencFinal,
                 responsable: responsableNombre,
                 observaciones: observacionesTexto
@@ -339,7 +336,6 @@
         boton.classList.add('cargando');
         boton.disabled = true;
 
-        // Enviar todos los registros en un solo viaje
         try {
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
