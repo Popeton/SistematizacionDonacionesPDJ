@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Empaques - Juntanza</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: #333; }
+        label { font-weight: bold; display: block; margin-top: 15px; color: #555;}
+        input, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px;}
+        
+        .btn-buscar { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-buscar:hover { background-color: #0056b3; }
+        
+        .cargando { background-color: #ccc !important; cursor: not-allowed; }
+        .hidden { display: none !important; }
+        
+        /* Estilos para los resultados */
+        .resultado-card { background-color: #e9ecef; border-left: 5px solid #28a745; padding: 15px; margin-top: 20px; border-radius: 5px; }
+        .resultado-header { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px; }
+        .resultado-header p { margin: 5px 0; color: #333; }
+        .item-lista { background: white; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #ddd; }
+        .item-lista span { font-weight: bold; color: #007bff; }
+        .alerta { background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-top: 15px; text-align: center; border: 1px solid #ffeeba;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔍 Consulta de Empaques</h2>
+    <p style="text-align: center; color: #666;">Ingresa el ID del registro para ver su contenido sin abrirlo.</p>
+
+    <form id="formularioConsulta">
+        <label>ID del Empaque:</label>
+        <input type="text" id="idBusqueda" placeholder="Ej. 4587" required autocomplete="off">
+        <button type="submit" id="btnBuscar" class="btn-buscar">🔎 Buscar Empaque</button>
+    </form>
+
+    <!-- Contenedor donde aparecerán los resultados -->
+    <div id="mensajeError" class="alerta hidden">No se encontró ningún empaque con ese ID.</div>
+    
+    <div id="contenedorResultados" class="resultado-card hidden">
+        <div class="resultado-header">
+            <h3 style="margin-top: 0; color: #28a745;">📦 Empaque Confirmado</h3>
+            <p><strong>Tipo de Empaque:</strong> <span id="resEmpaque"></span></p>
+            <p><strong>Registrado por:</strong> <span id="resResponsable"></span></p>
+            <p><strong>Fecha de ingreso:</strong> <span id="resFecha"></span></p>
+        </div>
+        
+        <h4 style="margin-bottom: 5px;">Contenido del empaque:</h4>
+        <!-- Aquí se inyectarán los productos -->
+        <div id="listaProductos"></div>
+    </div>
+</div>
+
+<script>
+    // PEGA AQUÍ TU ENLACE DE GOOGLE APPS SCRIPT
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz268H9EbYUUp-aDNOiy6USxqcT-b5GHkNSI9KXCgXYlL7MleihZhRLfxmHH3OzHIxs/exec';
+
+    document.getElementById('formularioConsulta').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const idBuscado = document.getElementById('idBusqueda').value.trim();
+        const boton = document.getElementById('btnBuscar');
+        const contResultados = document.getElementById('contenedorResultados');
+        const msjError = document.getElementById('mensajeError');
+        const listaProductos = document.getElementById('listaProductos');
+
+        // Estado de carga
+        boton.textContent = '⏳ Buscando...';
+        boton.classList.add('cargando');
+        boton.disabled = true;
+        contResultados.classList.add('hidden');
+        msjError.classList.add('hidden');
+        listaProductos.innerHTML = ""; // Limpiar resultados anteriores
+
+        try {
+            // Hacemos la consulta GET pasándole el ID en la URL
+            const urlConsulta = `${GOOGLE_SCRIPT_URL}?id=${encodeURIComponent(idBuscado)}`;
+            const respuesta = await fetch(urlConsulta);
+            const datosJSON = await respuesta.json();
+
+            if (datosJSON.status === "ok" && datosJSON.data.length > 0) {
+                // Si encontramos datos
+                const empaqueData = datosJSON.data;
+                
+                // Llenar la cabecera (tomamos los datos del primer producto porque son compartidos)
+                document.getElementById('resEmpaque').textContent = empaqueData[0].empaque;
+                document.getElementById('resResponsable').textContent = empaqueData[0].responsable;
+                
+                // Limpiar formato de fecha de Google Sheets si viene extraño
+                let fechaFormateada = empaqueData[0].fecha;
+                if (fechaFormateada.includes('T')) {
+                    fechaFormateada = new Date(fechaFormateada).toLocaleDateString('es-CO');
+                }
+                document.getElementById('resFecha').textContent = fechaFormateada + " - " + empaqueData[0].hora;
+
+                // Llenar la lista de productos (Soporta múltiples productos en 1 ID)
+                empaqueData.forEach(prod => {
+                    const divItem = document.createElement('div');
+                    divItem.className = 'item-lista';
+                    
+                    // Si el producto dice "Dentro de 1 Caja", lo limpiamos para la vista
+                    let nombreLimpio = prod.elemento.replace(/ \(Dentro de 1 .*\)/, "");
+
+                    divItem.innerHTML = `
+                        <p style="margin: 0;"><span>▶ Producto:</span> ${nombreLimpio} (${prod.categoria})</p>
+                        <p style="margin: 5px 0 0 0;"><span>▶ Cantidad:</span> ${prod.cantidad} ${prod.medida}</p>
+                        ${prod.vencimiento && prod.vencimiento !== "N/A" ? `<p style="margin: 5px 0 0 0; color: #d9534f; font-size: 14px;">Vencimiento: ${prod.vencimiento.substring(0,10)}</p>` : ""}
+                    `;
+                    listaProductos.appendChild(divItem);
+                });
+
+                // Mostrar el cuadro de resultados
+                contResultados.classList.remove('hidden');
+            } else {
+                // Si el ID no existe en el Excel
+                msjError.classList.remove('hidden');
+            }
+        } catch (error) {
+            alert("❌ Ocurrió un error al conectar con la base de datos.");
+            console.error(error);
+        } finally {
+            // Restaurar el botón
+            boton.textContent = '🔎 Buscar Empaque';
+            boton.classList.remove('cargando');
+            boton.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
