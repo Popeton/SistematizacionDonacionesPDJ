@@ -70,9 +70,9 @@
                 </div>
             </div>
 
-            <!-- ELEMENTO CON AUTOSUGERENCIAS -->
+            <!-- ELEMENTO CON AUTOSUGERENCIAS Y RESTRICCIÓN DE SOLO LETRAS -->
             <label>Elemento a registrar:</label>
-            <input type="text" id="elemento" list="" placeholder="Escribe o selecciona de la lista..." autocomplete="off" required>
+            <input type="text" id="elemento" list="" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" placeholder="Escribe o selecciona de la lista..." autocomplete="off" required>
             
             <!-- Listas dinámicas ocultas -->
             <datalist id="listaAlimentos">
@@ -124,8 +124,8 @@
                     <input type="number" id="unidades" placeholder="Ej. 24" min="1">
                 </div>
                 <div>
-                    <label>Medida:</label>
-                    <input type="text" id="medida" placeholder="Ej. kg, libras, unidades...">
+                    <label>Medida por unidad:</label>
+                    <input type="text" id="medida" placeholder="Medidas de cada unidad">
                 </div>
             </div>
 
@@ -135,7 +135,7 @@
                 <div id="listaMultiples">
                     <div class="flex-row fila-multiple" style="margin-top: 5px;">
                         <div><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
-                        <div><input type="text" class="multi-med" placeholder="Medida (Ej. kg de arroz)"></div>
+                        <div><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
                     </div>
                 </div>
                 <button type="button" class="btn-agregar-fila" onclick="agregarFilaMultiple()">+ Añadir otro producto al empaque</button>
@@ -161,7 +161,6 @@
 </div>
 
 <script>
-    // PEGA AQUÍ TU ENLACE DE GOOGLE APPS SCRIPT
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz268H9EbYUUp-aDNOiy6USxqcT-b5GHkNSI9KXCgXYlL7MleihZhRLfxmHH3OzHIxs/exec';
 
     function seleccionarCategoria(cat) {
@@ -297,7 +296,7 @@
         nuevaFila.style.marginTop = '5px';
         nuevaFila.innerHTML = `
             <div><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
-            <div><input type="text" class="multi-med" placeholder="Medida (Ej. kg)"></div>
+            <div><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
         `;
         contenedor.appendChild(nuevaFila);
     }
