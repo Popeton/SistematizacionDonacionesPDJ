@@ -30,15 +30,18 @@
 
 <div class="container">
     <h2>🔍 Consulta de Empaques</h2>
-    <p style="text-align: center; color: #666;">Ingresa el ID del registro para ver su contenido sin abrirlo.</p>
+
+    <!-- BOTÓN PARA DEVOLVERSE AL REGISTRO -->
+    <a href="https://popeton.github.io/SistematizacionDonacionesPDJ/index.html" style="display: block; text-align: center; background-color: #28a745; color: white; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-bottom: 20px;">📦 Volver a Registrar una Entrega</a>
+
+    <p style="text-align: center; color: #666; margin-top: 0;">Ingresa el ID del registro para ver su contenido sin abrirlo.</p>
 
     <form id="formularioConsulta">
         <label>ID del Empaque:</label>
         <input type="text" id="idBusqueda" placeholder="Ej. 4587" required autocomplete="off">
         <button type="submit" id="btnBuscar" class="btn-buscar">🔎 Buscar Empaque</button>
     </form>
-
-    <!-- Contenedor donde aparecerán los resultados -->
+    
     <div id="mensajeError" class="alerta hidden">No se encontró ningún empaque con ese ID.</div>
     
     <div id="contenedorResultados" class="resultado-card hidden">
@@ -50,13 +53,11 @@
         </div>
         
         <h4 style="margin-bottom: 5px;">Contenido del empaque:</h4>
-        <!-- Aquí se inyectarán los productos -->
         <div id="listaProductos"></div>
     </div>
 </div>
 
 <script>
-    // PEGA AQUÍ TU ENLACE DE GOOGLE APPS SCRIPT
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz268H9EbYUUp-aDNOiy6USxqcT-b5GHkNSI9KXCgXYlL7MleihZhRLfxmHH3OzHIxs/exec';
 
     document.getElementById('formularioConsulta').addEventListener('submit', async function(e) {
@@ -68,62 +69,54 @@
         const msjError = document.getElementById('mensajeError');
         const listaProductos = document.getElementById('listaProductos');
 
-        // Estado de carga
         boton.textContent = '⏳ Buscando...';
         boton.classList.add('cargando');
         boton.disabled = true;
         contResultados.classList.add('hidden');
         msjError.classList.add('hidden');
-        listaProductos.innerHTML = ""; // Limpiar resultados anteriores
+        listaProductos.innerHTML = ""; 
 
         try {
-            // Hacemos la consulta GET pasándole el ID en la URL
             const urlConsulta = `${GOOGLE_SCRIPT_URL}?id=${encodeURIComponent(idBuscado)}`;
             const respuesta = await fetch(urlConsulta);
             const datosJSON = await respuesta.json();
 
             if (datosJSON.status === "ok" && datosJSON.data.length > 0) {
-                // Si encontramos datos
                 const empaqueData = datosJSON.data;
                 
-                // Llenar la cabecera (tomamos los datos del primer producto porque son compartidos)
                 document.getElementById('resEmpaque').textContent = empaqueData[0].empaque;
                 document.getElementById('resResponsable').textContent = empaqueData[0].responsable;
                 
-                // Limpiar formato de fecha de Google Sheets si viene extraño
                 let fechaFormateada = empaqueData[0].fecha;
                 if (fechaFormateada.includes('T')) {
                     fechaFormateada = new Date(fechaFormateada).toLocaleDateString('es-CO');
                 }
                 document.getElementById('resFecha').textContent = fechaFormateada + " - " + empaqueData[0].hora;
 
-                // Llenar la lista de productos (Soporta múltiples productos en 1 ID)
                 empaqueData.forEach(prod => {
                     const divItem = document.createElement('div');
                     divItem.className = 'item-lista';
                     
-                    // Si el producto dice "Dentro de 1 Caja", lo limpiamos para la vista
                     let nombreLimpio = prod.elemento.replace(/ \(Dentro de 1 .*\)/, "");
+                    
+                    // Si la medida es N/A (como en salud o cobijas), no la mostramos en la consulta para no ensuciar la vista
+                    let textoMedida = (prod.medida === "N/A") ? "" : prod.medida;
 
                     divItem.innerHTML = `
                         <p style="margin: 0;"><span>▶ Producto:</span> ${nombreLimpio} (${prod.categoria})</p>
-                        <p style="margin: 5px 0 0 0;"><span>▶ Cantidad:</span> ${prod.cantidad} ${prod.medida}</p>
-                        ${prod.vencimiento && prod.vencimiento !== "N/A" ? `<p style="margin: 5px 0 0 0; color: #d9534f; font-size: 14px;">Vencimiento: ${prod.vencimiento.substring(0,10)}</p>` : ""}
+                        <p style="margin: 5px 0 0 0;"><span>▶ Cantidad:</span> ${prod.cantidad} ${textoMedida}</p>
                     `;
                     listaProductos.appendChild(divItem);
                 });
 
-                // Mostrar el cuadro de resultados
                 contResultados.classList.remove('hidden');
             } else {
-                // Si el ID no existe en el Excel
                 msjError.classList.remove('hidden');
             }
         } catch (error) {
             alert("❌ Ocurrió un error al conectar con la base de datos.");
             console.error(error);
         } finally {
-            // Restaurar el botón
             boton.textContent = '🔎 Buscar Empaque';
             boton.classList.remove('cargando');
             boton.disabled = false;

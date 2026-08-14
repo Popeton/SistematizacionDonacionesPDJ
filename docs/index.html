@@ -31,14 +31,14 @@
 <div class="container">
     <h2>🤝 Juntanza Cultural Solidaria</h2>
     
-    <!-- BOTÓN PARA IR A LA PÁGINA DE CONSULTA -->
-    <a href="https://popeton.github.io/SistematizacionDonacionesPDJ/consultas.html" style="display: block; text-align: center; background-color: #17a2b8; color: white; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-bottom: 20px;">🔍 Buscar un Empaque</a>
+    <!-- BOTÓN PARA IR A LA PÁGINA DE CONSULTAS (ACTUALIZADO) -->
+    <a href="https://popeton.github.io/SistematizacionDonacionesPDJ/consultas.html" target="_blank" style="display: block; text-align: center; background-color: #17a2b8; color: white; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-bottom: 20px;">🔍 Buscar un Empaque</a>
 
     <!-- PANTALLA 1: CATEGORÍAS -->
     <div id="pantalla1">
         <h3>¿Qué vas a registrar?</h3>
         <button class="btn-categoria" onclick="seleccionarCategoria('Alimentos')">🍎 Alimentos</button>
-        <button class="btn-categoria" onclick="seleccionarCategoria('Medicamentos')">💊 Medicamentos</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Elementos de salud')">💊 Elementos de Salud</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Higiene y aseo')">🧼 Higiene y Aseo</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Cobijas y Carpas')">⛺ Cobijas / Carpas</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Agua')">💧 Agua</button>
@@ -60,7 +60,7 @@
                 </label>
             </div>
 
-            <!-- PREGUNTA UNIFICADA DE VENCIMIENTO (Para Enlatados y Medicamentos) -->
+            <!-- PREGUNTA UNIFICADA DE VENCIMIENTO -->
             <div id="divPreguntaVencimiento" class="hidden" style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 10px;">
                 <label>⚠️ ¿Este producto se vence en los próximos 3 meses?</label>
                 <select id="vencePronto" onchange="bloquearSiVence()">
@@ -72,8 +72,18 @@
                 </div>
             </div>
 
-            <!-- ELEMENTO -->
-            <label>Elemento a registrar:</label>
+            <!-- TIPO DE ELEMENTO DE SALUD -->
+            <div id="divSubTipoSalud" class="hidden" style="background: #e1f5fe; padding: 10px; border-radius: 5px; margin-top: 15px;">
+                <label style="margin-top: 0; color: #0277bd;">Clasificación de Salud:</label>
+                <select id="tipoSalud">
+                    <option value="">Selecciona el tipo...</option>
+                    <option value="Medicamento">Medicamentos (Pastillas, jarabes, gotas, etc.)</option>
+                    <option value="Insumos y Botiquín">Insumos y Botiquín (Gasas, alcohol, jeringas, etc.)</option>
+                </select>
+            </div>
+
+            <!-- ELEMENTO EXACTO -->
+            <label>Nombre del producto:</label>
             <input type="text" id="elemento" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" placeholder="Escribe el nombre del producto..." required>
 
             <hr style="margin-top: 20px; border: 0.5px solid #eee;">
@@ -99,7 +109,7 @@
             <!-- CHECKBOX PARA EMPAQUE MÚLTIPLE -->
             <label style="margin-top: 15px; font-weight: normal;">
                 <input type="checkbox" id="esMultiple" onchange="gestionarCantidades()" style="width: auto;"> 
-                📦 Tienes un solo empaque con varias medidas
+                📦 Tienes un solo empaque con varias medidas/productos
             </label>
 
             <!-- CONTENEDOR SIMPLE -->
@@ -123,7 +133,7 @@
                         <div class="col-med" style="width: 50%;"><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
                     </div>
                 </div>
-                <button type="button" class="btn-agregar-fila" onclick="agregarFilaMultiple()">+ Añadir otro producto al empaque</button>
+                <button type="button" class="btn-agregar-fila" onclick="agregarFilaMultiple()">+ Añadir otra cantidad al empaque</button>
             </div>
 
             <hr style="border: 0.5px solid #eee;">
@@ -156,9 +166,30 @@
         
         const divEnlatado = document.getElementById('divEnlatado');
         const divPreguntaVencimiento = document.getElementById('divPreguntaVencimiento');
+        const divSubTipoSalud = document.getElementById('divSubTipoSalud');
 
-        // LÓGICA DE OCULTAR MEDIDAS PARA MEDICAMENTOS
-        if (cat === 'Medicamentos') {
+        // MOSTRAR/OCULTAR SUBTIPO DE SALUD
+        if (cat === 'Elementos de salud') {
+            divSubTipoSalud.classList.remove('hidden');
+            document.getElementById('tipoSalud').required = true;
+            
+            divEnlatado.classList.add('hidden');
+            divPreguntaVencimiento.classList.remove('hidden');
+        } else {
+            divSubTipoSalud.classList.add('hidden');
+            document.getElementById('tipoSalud').required = false;
+            
+            if (cat === 'Alimentos') {
+                divEnlatado.classList.remove('hidden');
+                divPreguntaVencimiento.classList.add('hidden');
+            } else {
+                divEnlatado.classList.add('hidden');
+                divPreguntaVencimiento.classList.add('hidden');
+            }
+        }
+
+        // OCULTAR MEDIDAS PARA SALUD Y COBIJAS/CARPAS
+        if (cat === 'Elementos de salud' || cat === 'Cobijas y Carpas') {
             document.getElementById('divMedidaSimple').classList.add('hidden');
             document.getElementById('divCantSimple').style.width = '100%';
             document.querySelectorAll('.col-med').forEach(el => el.classList.add('hidden'));
@@ -169,18 +200,6 @@
             document.getElementById('divCantSimple').style.width = '50%';
             document.querySelectorAll('.col-med').forEach(el => el.classList.remove('hidden'));
             document.querySelectorAll('.col-cant').forEach(el => el.style.width = '50%');
-        }
-
-        // LÓGICA DE VENCIMIENTOS
-        if (cat === 'Alimentos') {
-            divEnlatado.classList.remove('hidden');
-            divPreguntaVencimiento.classList.add('hidden');
-        } else if (cat === 'Medicamentos') {
-            divEnlatado.classList.add('hidden');
-            divPreguntaVencimiento.classList.remove('hidden'); // Siempre preguntar vencimiento en medicamentos
-        } else {
-            divEnlatado.classList.add('hidden');
-            divPreguntaVencimiento.classList.add('hidden');
         }
 
         gestionarCantidades();
@@ -248,21 +267,23 @@
             divSimple.classList.remove('hidden');
             divMultiple.classList.add('hidden');
             inputUnidadSimple.required = true;
-            if(cat !== 'Medicamentos') inputMedidaSimple.required = true;
+            if(cat !== 'Elementos de salud' && cat !== 'Cobijas y Carpas') {
+                inputMedidaSimple.required = true;
+            }
         }
     }
 
     function agregarFilaMultiple() {
         const cat = document.getElementById('categoriaSeleccionada').value;
-        const esMeds = (cat === 'Medicamentos');
+        const sinMedida = (cat === 'Elementos de salud' || cat === 'Cobijas y Carpas');
         
         const contenedor = document.getElementById('listaMultiples');
         const nuevaFila = document.createElement('div');
         nuevaFila.className = 'flex-row fila-multiple';
         nuevaFila.style.marginTop = '5px';
         nuevaFila.innerHTML = `
-            <div class="col-cant" style="width: ${esMeds ? '100%' : '50%'};"><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
-            <div class="col-med ${esMeds ? 'hidden' : ''}" style="width: 50%;"><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
+            <div class="col-cant" style="width: ${sinMedida ? '100%' : '50%'};"><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
+            <div class="col-med ${sinMedida ? 'hidden' : ''}" style="width: 50%;"><input type="text" class="multi-med" placeholder="Medidas de cada unidad"></div>
         `;
         contenedor.appendChild(nuevaFila);
     }
@@ -280,17 +301,28 @@
 
         const cat = document.getElementById('categoriaSeleccionada').value;
         const esEnlatado = document.getElementById('esEnlatado').checked;
-        const sufijoElemento = (cat === 'Alimentos' && esEnlatado) ? " (Enlatado)" : "";
-        const elementoNombre = document.getElementById('elemento').value + sufijoElemento;
+        
+        // Formateo del nombre del producto
+        let prefijoSalud = "";
+        let sufijoEnlatado = "";
+        if (cat === 'Elementos de salud') {
+            prefijoSalud = document.getElementById('tipoSalud').value + " - ";
+        }
+        if (cat === 'Alimentos' && esEnlatado) {
+            sufijoEnlatado = " (Enlatado)";
+        }
+        
+        const elementoNombre = prefijoSalud + document.getElementById('elemento').value + sufijoEnlatado;
 
         let fechaVencFinal = "N/A";
-        if (cat === 'Medicamentos' || (cat === 'Alimentos' && esEnlatado)) {
+        if (cat === 'Elementos de salud' || (cat === 'Alimentos' && esEnlatado)) {
             fechaVencFinal = "Vence en más de 3 meses"; 
         }
 
         const responsableNombre = document.getElementById('responsable').value;
         const observacionesTexto = document.getElementById('observaciones').value;
 
+        const sinMedida = (cat === 'Elementos de salud' || cat === 'Cobijas y Carpas');
         let registrosAEnviar = [];
 
         if (document.getElementById('esMultiple').checked) {
@@ -298,8 +330,7 @@
             const meds = document.querySelectorAll('.multi-med');
             
             for(let i=0; i<cants.length; i++) {
-                // Permitir omitir la medida si son medicamentos
-                if(cants[i].value && (meds[i].value || cat === 'Medicamentos')) {
+                if(cants[i].value && (meds[i].value || sinMedida)) {
                     registrosAEnviar.push({
                         id: idCorto,
                         fecha: new Date().toLocaleDateString('es-CO'),
@@ -308,7 +339,7 @@
                         elemento: elementoNombre + ` (Dentro de 1 ${empaqueFinal})`, 
                         tipo_empaque: empaqueFinal,
                         unidades_internas: Number(cants[i].value), 
-                        medida_empaque: (cat === 'Medicamentos') ? "N/A" : meds[i].value, // Fuerza N/A
+                        medida_empaque: sinMedida ? "N/A" : meds[i].value,
                         fecha_vencimiento: fechaVencFinal,
                         responsable: responsableNombre,
                         observaciones: observacionesTexto
@@ -324,7 +355,7 @@
                 elemento: elementoNombre,
                 tipo_empaque: empaqueFinal,
                 unidades_internas: Number(document.getElementById('unidades').value),
-                medida_empaque: (cat === 'Medicamentos') ? "N/A" : document.getElementById('medida').value, // Fuerza N/A
+                medida_empaque: sinMedida ? "N/A" : document.getElementById('medida').value,
                 fecha_vencimiento: fechaVencFinal,
                 responsable: responsableNombre,
                 observaciones: observacionesTexto
@@ -346,7 +377,7 @@
             alert("✅ Registro guardado. ID asignado: " + idCorto);
             volverPantalla1();
         } catch(error) {
-            alert("❌ Error al guardar. Revisa el internet.");
+            alert("❌ Error al guardar. Revisa tu conexión a internet.");
         } finally {
             boton.textContent = '💾 Guardar Registro';
             boton.classList.remove('cargando');
