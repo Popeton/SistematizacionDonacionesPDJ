@@ -154,7 +154,6 @@
         document.getElementById('categoriaSeleccionada').value = cat;
         document.getElementById('formularioAcopio').reset();
         
-        // Resetear visuales
         document.getElementById('btnGuardar').disabled = false;
         document.getElementById('alertaVencimiento').classList.add('hidden');
         document.getElementById('divPreguntaVencimiento').classList.add('hidden');
@@ -163,7 +162,6 @@
         const divEnlatado = document.getElementById('divEnlatado');
         const divVencimientoMed = document.getElementById('divVencimientoMed');
 
-        // Configuración por categoría
         if (cat === 'Alimentos') {
             divEnlatado.classList.remove('hidden');
             divVencimientoMed.classList.add('hidden');
@@ -173,7 +171,6 @@
             divVencimientoMed.classList.remove('hidden');
             document.getElementById('fechaVencimientoMed').required = true;
         } else {
-            // Para Higiene, Cobijas y Agua
             divEnlatado.classList.add('hidden');
             divVencimientoMed.classList.add('hidden');
             document.getElementById('fechaVencimientoMed').required = false;
@@ -197,13 +194,12 @@
         }
     }
 
-    // LÓGICA DE ENLATADOS (Solo pregunta Sí/No)
     function mostrarPreguntaVencimiento() {
         const esEnlatado = document.getElementById('esEnlatado').checked;
         const divPreg = document.getElementById('divPreguntaVencimiento');
         if(esEnlatado) {
             divPreg.classList.remove('hidden');
-            document.getElementById('vencePronto').value = "No"; // Por defecto seguro
+            document.getElementById('vencePronto').value = "No"; 
             bloquearSiVence();
         } else {
             divPreg.classList.add('hidden');
@@ -226,7 +222,6 @@
         }
     }
 
-    // LÓGICA DE MEDICAMENTOS (Validar fecha exacta)
     function verificarVencimientoMedicamento() {
         const fechaInput = document.getElementById('fechaVencimientoMed').value;
         if(!fechaInput) return;
@@ -241,7 +236,6 @@
         }
     }
 
-    // LÓGICA DE MÚLTIPLES EMPAQUES
     function gestionarCantidades() {
         const esMultiple = document.getElementById('esMultiple').checked;
         const divSimple = document.getElementById('contenedorSimple');
@@ -274,8 +268,8 @@
         contenedor.appendChild(nuevaFila);
     }
 
-    // ENVÍO DE DATOS
-    document.getElementById('formularioAcopio').addEventListener('submit', function(e) {
+    // ENVÍO DE DATOS CORREGIDO PARA EXCEL
+    document.getElementById('formularioAcopio').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const idCorto = Math.floor(1000 + Math.random() * 9000).toString();
@@ -288,29 +282,8 @@
         const cat = document.getElementById('categoriaSeleccionada').value;
         const esEnlatado = document.getElementById('esEnlatado').checked;
         const sufijoElemento = (cat === 'Alimentos' && esEnlatado) ? " (Enlatado)" : "";
+        const elementoNombre = document.getElementById('elemento').value + sufijoElemento;
 
-        // Capturar cantidades y medidas (Simple vs Múltiple)
-        let unidadesFinales = "";
-        let medidasFinales = "";
-
-        if (document.getElementById('esMultiple').checked) {
-            const cants = document.querySelectorAll('.multi-cant');
-            const meds = document.querySelectorAll('.multi-med');
-            let arregloMedidas = [];
-            
-            for(let i=0; i<cants.length; i++) {
-                if(cants[i].value && meds[i].value) {
-                    arregloMedidas.push(cants[i].value + " " + meds[i].value);
-                }
-            }
-            unidadesFinales = "Varias (Empaque mixto)";
-            medidasFinales = arregloMedidas.join(" + ");
-        } else {
-            unidadesFinales = document.getElementById('unidades').value;
-            medidasFinales = document.getElementById('medida').value;
-        }
-
-        // Determinar qué fecha guardar
         let fechaVencFinal = "N/A";
         if (cat === 'Medicamentos') {
             fechaVencFinal = document.getElementById('fechaVencimientoMed').value;
@@ -318,40 +291,73 @@
             fechaVencFinal = "Vence en más de 3 meses"; 
         }
 
+        const responsableNombre = document.getElementById('responsable').value;
+        const observacionesTexto = document.getElementById('observaciones').value;
+
+        // Crear una lista de registros para enviar (1 si es simple, varios si es múltiple)
+        let registrosAEnviar = [];
+
+        if (document.getElementById('esMultiple').checked) {
+            const cants = document.querySelectorAll('.multi-cant');
+            const meds = document.querySelectorAll('.multi-med');
+            
+            for(let i=0; i<cants.length; i++) {
+                if(cants[i].value && meds[i].value) {
+                    registrosAEnviar.push({
+                        id: idCorto,
+                        fecha: new Date().toLocaleDateString('es-CO'),
+                        hora: new Date().toLocaleTimeString('es-CO'),
+                        categoria: cat,
+                        elemento: elementoNombre + ` (Dentro de 1 ${empaqueFinal})`, // Aclaración en Excel
+                        tipo_empaque: empaqueFinal,
+                        unidades_internas: Number(cants[i].value), // ENVIAMOS NÚMERO PURO A LA CELDA
+                        medida_empaque: meds[i].value,
+                        fecha_vencimiento: fechaVencFinal,
+                        responsable: responsableNombre,
+                        observaciones: observacionesTexto
+                    });
+                }
+            }
+        } else {
+            registrosAEnviar.push({
+                id: idCorto,
+                fecha: new Date().toLocaleDateString('es-CO'),
+                hora: new Date().toLocaleTimeString('es-CO'),
+                categoria: cat,
+                elemento: elementoNombre,
+                tipo_empaque: empaqueFinal,
+                unidades_internas: Number(document.getElementById('unidades').value), // NÚMERO PURO
+                medida_empaque: document.getElementById('medida').value,
+                fecha_vencimiento: fechaVencFinal,
+                responsable: responsableNombre,
+                observaciones: observacionesTexto
+            });
+        }
+
         const boton = document.getElementById('btnGuardar');
         boton.textContent = '⏳ Guardando...';
         boton.classList.add('cargando');
         boton.disabled = true;
 
-        const datos = {
-            id: idCorto,
-            fecha: new Date().toLocaleDateString('es-CO'),
-            hora: new Date().toLocaleTimeString('es-CO'),
-            categoria: cat,
-            elemento: document.getElementById('elemento').value + sufijoElemento,
-            tipo_empaque: empaqueFinal,
-            unidades_internas: unidadesFinales,
-            medida_empaque: medidasFinales,
-            fecha_vencimiento: fechaVencFinal,
-            responsable: document.getElementById('responsable').value,
-            observaciones: document.getElementById('observaciones').value
-        };
-
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        }).then(() => {
+        // Enviar todos los registros uno por uno a Google Sheets
+        try {
+            for (let i = 0; i < registrosAEnviar.length; i++) {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(registrosAEnviar[i])
+                });
+            }
             alert("✅ Registro guardado. ID asignado: " + idCorto);
             volverPantalla1();
-        }).catch(error => {
+        } catch(error) {
             alert("❌ Error al guardar. Revisa el internet.");
-        }).finally(() => {
+        } finally {
             boton.textContent = '💾 Guardar Registro';
             boton.classList.remove('cargando');
             boton.disabled = false;
-        });
+        }
     });
 </script>
 </body>
