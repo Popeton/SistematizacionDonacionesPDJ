@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Ayudas - Centro de Acopio</title>
+    <title>Juntanza Cultural Solidaria</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -11,34 +11,34 @@
         label { font-weight: bold; display: block; margin-top: 15px; color: #555;}
         input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px;}
         
-        /* Botones de Categoría */
         .btn-categoria { background-color: #007bff; color: white; border: none; cursor: pointer; margin-bottom: 10px; font-weight: bold; transition: 0.3s; }
         .btn-categoria:hover { background-color: #0056b3; }
         
-        /* Botones de Acción */
         .btn-guardar { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 25px; }
         .btn-guardar:hover { background-color: #218838; }
         .btn-volver { background-color: #6c757d; color: white; border: none; cursor: pointer; margin-bottom: 15px; }
+        .btn-agregar-fila { background-color: #17a2b8; color: white; border: none; padding: 8px; margin-top: 10px; cursor: pointer; border-radius: 5px; }
         
         .hidden { display: none !important; }
         .cargando { background-color: #ccc !important; cursor: not-allowed; }
         
-        .flex-row { display: flex; gap: 10px; }
+        .flex-row { display: flex; gap: 10px; align-items: center; }
         .flex-row > div { width: 50%; }
+        .alerta-roja { color: #d9534f; font-weight: bold; margin-top: 10px; background: #fdf2f2; padding: 10px; border-radius: 5px; border: 1px solid #d9534f;}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📦 Centro de Acopio</h2>
+    <h2>🤝 Juntanza Cultural Solidaria</h2>
 
-    <!-- PANTALLA 1: SELECCIÓN DE CATEGORÍA -->
+    <!-- PANTALLA 1: CATEGORÍAS -->
     <div id="pantalla1">
         <h3>¿Qué vas a registrar?</h3>
         <button class="btn-categoria" onclick="seleccionarCategoria('Alimentos')">🍎 Alimentos</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Medicamentos')">💊 Medicamentos</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Higiene y aseo')">🧼 Higiene y Aseo</button>
-        <button class="btn-categoria" onclick="seleccionarCategoria('Ropa y cobijas')">👕 Ropa y Cobijas</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Cobijas y Carpas')">⛺ Cobijas / Carpas</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Agua')">💧 Agua</button>
     </div>
 
@@ -49,23 +49,47 @@
 
         <form id="formularioAcopio">
             
-            <label>Tipo de Movimiento:</label>
-            <select id="movimiento" required>
-                <option value="Entrada">Entrada (Recibir donación)</option>
-                <option value="Salida">Salida (Entregar ayuda)</option>
-            </select>
-
-            <!-- Oculto para lógica interna -->
             <input type="hidden" id="categoriaSeleccionada">
 
+            <!-- ALIMENTOS: PREGUNTA DE ENLATADO -->
             <div id="divEnlatado" class="hidden">
                 <label style="background: #e9ecef; padding: 10px; border-radius: 5px;">
-                    <input type="checkbox" id="esEnlatado" onchange="gestionarVencimiento()" style="width: auto;"> 🥫 ¿Este producto es un enlatado?
+                    <input type="checkbox" id="esEnlatado" onchange="mostrarPreguntaVencimiento()" style="width: auto;"> 🥫 ¿Este producto es un enlatado?
                 </label>
             </div>
 
-            <label>Elemento (Ej. Arroz, Paracetamol, Camisas):</label>
-            <input type="text" id="elemento" required>
+            <!-- PREGUNTA CONDICIONAL DE VENCIMIENTO PARA ENLATADOS -->
+            <div id="divPreguntaVencimiento" class="hidden" style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                <label>⚠️ ¿Este enlatado se vence en los próximos 3 meses?</label>
+                <select id="vencePronto" onchange="bloquearSiVence()">
+                    <option value="No">No, le queda más tiempo (Seguro)</option>
+                    <option value="Sí">Sí, vence en menos de 3 meses (Rechazar)</option>
+                </select>
+                <div id="alertaVencimiento" class="alerta-roja hidden">
+                    ❌ No es posible inventariar este producto. Protocolo de seguridad: Vencimiento muy próximo.
+                </div>
+            </div>
+
+            <!-- ELEMENTO CON AUTOSUGERENCIAS -->
+            <label>Elemento a registrar:</label>
+            <input type="text" id="elemento" list="" placeholder="Escribe o selecciona de la lista..." autocomplete="off" required>
+            
+            <!-- Listas dinámicas ocultas -->
+            <datalist id="listaAlimentos">
+                <option value="Arroz"><option value="Frijoles"><option value="Lentejas"><option value="Atún"><option value="Aceite"><option value="Panela"><option value="Sal"><option value="Azúcar"><option value="Harina"><option value="Pastas">
+            </datalist>
+            <datalist id="listaMedicamentos">
+                <option value="Paracetamol"><option value="Ibuprofeno"><option value="Alcohol"><option value="Gasa"><option value="Suero"><option value="Algodón"><option value="Curitas"><option value="Tapabocas">
+            </datalist>
+            <datalist id="listaHigiene">
+                <option value="Jabón de baño"><option value="Papel higiénico"><option value="Cepillo de dientes"><option value="Crema dental"><option value="Toallas higiénicas"><option value="Desodorante"><option value="Pañales">
+            </datalist>
+            <datalist id="listaCobijas">
+                <option value="Cobija térmica"><option value="Carpa 2 personas"><option value="Carpa familiar"><option value="Colchoneta"><option value="Saco de dormir"><option value="Manta">
+            </datalist>
+            <datalist id="listaAgua">
+                <option value="Botella de agua (pequeña)"><option value="Garrafón"><option value="Bolsa de agua"><option value="Paca de agua">
+            </datalist>
 
             <hr style="margin-top: 20px; border: 0.5px solid #eee;">
             <h4 style="margin-bottom: 0;">Detalles de Empaquetado</h4>
@@ -87,28 +111,49 @@
                 </div>
             </div>
 
-            <div class="flex-row">
+            <!-- CHECKBOX PARA EMPAQUE MÚLTIPLE -->
+            <label style="margin-top: 15px; font-weight: normal;">
+                <input type="checkbox" id="esMultiple" onchange="gestionarCantidades()" style="width: auto;"> 
+                📦 ¿Este empaque contiene varias medidas adentro? (Ej: 1 caja con arroz, frijoles, etc.)
+            </label>
+
+            <!-- CONTENEDOR SIMPLE (1 sola medida) -->
+            <div id="contenedorSimple" class="flex-row" style="margin-top: 10px;">
                 <div>
-                    <label>Cantidad (Unidades):</label>
-                    <input type="number" id="unidades" placeholder="Ej. 24" min="1" required>
+                    <label>Cantidad:</label>
+                    <input type="number" id="unidades" placeholder="Ej. 24" min="1">
                 </div>
                 <div>
                     <label>Medida:</label>
-                    <input type="text" id="medida" placeholder="Ej. kg, gramos, L..." required>
+                    <input type="text" id="medida" placeholder="Ej. kg, libras, unidades...">
                 </div>
             </div>
-            <hr style="border: 0.5px solid #eee;">
 
-            <div id="divVencimiento" class="hidden">
-                <label style="color: #d9534f;">Fecha de Vencimiento:</label>
-                <input type="date" id="fechaVencimiento" onchange="verificar3Meses()">
+            <!-- CONTENEDOR MÚLTIPLE (Varias medidas) -->
+            <div id="contenedorMultiple" class="hidden" style="margin-top: 10px; padding: 10px; background: #e9ecef; border-radius: 5px;">
+                <label>Detalla las cantidades y medidas que van adentro:</label>
+                <div id="listaMultiples">
+                    <div class="flex-row fila-multiple" style="margin-top: 5px;">
+                        <div><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
+                        <div><input type="text" class="multi-med" placeholder="Medida (Ej. kg de arroz)"></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-agregar-fila" onclick="agregarFilaMultiple()">+ Añadir otro producto al empaque</button>
             </div>
 
-            <label>Responsable (Tu nombre/ID):</label>
-            <input type="text" id="responsable" required>
+            <hr style="border: 0.5px solid #eee;">
+
+            <!-- VENCIMIENTO EXACTO (Solo para Medicamentos) -->
+            <div id="divVencimientoMed" class="hidden">
+                <label style="color: #d9534f;">Fecha de Vencimiento del Medicamento:</label>
+                <input type="date" id="fechaVencimientoMed" onchange="verificarVencimientoMedicamento()">
+            </div>
+
+            <label>Responsable:</label>
+            <input type="text" id="responsable" placeholder="Tu nombre" required>
 
             <label>Observaciones (Opcional):</label>
-            <input type="text" id="observaciones">
+            <input type="text" id="observaciones" placeholder="Escribe aquí si hay detalles extra">
 
             <button type="submit" id="btnGuardar" class="btn-guardar">💾 Guardar Registro</button>
         </form>
@@ -116,37 +161,50 @@
 </div>
 
 <script>
-    // URL DE TU GOOGLE SCRIPT (Asegúrate de pegar la tuya aquí)
+    // PEGA AQUÍ TU ENLACE DE GOOGLE APPS SCRIPT
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz268H9EbYUUp-aDNOiy6USxqcT-b5GHkNSI9KXCgXYlL7MleihZhRLfxmHH3OzHIxs/exec';
 
-    // NAVEGACIÓN ENTRE PANTALLAS
     function seleccionarCategoria(cat) {
         document.getElementById('pantalla1').classList.add('hidden');
         document.getElementById('pantalla2').classList.remove('hidden');
         
         document.getElementById('tituloCategoria').innerText = "Registro: " + cat;
         document.getElementById('categoriaSeleccionada').value = cat;
-
-        // Limpiar formulario al entrar
         document.getElementById('formularioAcopio').reset();
         
-        // Mostrar lógica especial según categoría
+        // Resetear visuales
+        document.getElementById('btnGuardar').disabled = false;
+        document.getElementById('alertaVencimiento').classList.add('hidden');
+        document.getElementById('divPreguntaVencimiento').classList.add('hidden');
+        gestionarCantidades();
+        
         const divEnlatado = document.getElementById('divEnlatado');
-        const divVencimiento = document.getElementById('divVencimiento');
-        const inputVencimiento = document.getElementById('fechaVencimiento');
+        const divVencimientoMed = document.getElementById('divVencimientoMed');
+        const inputElemento = document.getElementById('elemento');
 
+        // Asignar datalist dinámico
         if (cat === 'Alimentos') {
+            inputElemento.setAttribute('list', 'listaAlimentos');
             divEnlatado.classList.remove('hidden');
-            divVencimiento.classList.add('hidden');
-            inputVencimiento.required = false;
+            divVencimientoMed.classList.add('hidden');
+            document.getElementById('fechaVencimientoMed').required = false;
         } else if (cat === 'Medicamentos') {
+            inputElemento.setAttribute('list', 'listaMedicamentos');
             divEnlatado.classList.add('hidden');
-            divVencimiento.classList.remove('hidden');
-            inputVencimiento.required = true;
-        } else {
+            divVencimientoMed.classList.remove('hidden');
+            document.getElementById('fechaVencimientoMed').required = true;
+        } else if (cat === 'Higiene y aseo') {
+            inputElemento.setAttribute('list', 'listaHigiene');
             divEnlatado.classList.add('hidden');
-            divVencimiento.classList.add('hidden');
-            inputVencimiento.required = false;
+            divVencimientoMed.classList.add('hidden');
+        } else if (cat === 'Cobijas y Carpas') {
+            inputElemento.setAttribute('list', 'listaCobijas');
+            divEnlatado.classList.add('hidden');
+            divVencimientoMed.classList.add('hidden');
+        } else if (cat === 'Agua') {
+            inputElemento.setAttribute('list', 'listaAgua');
+            divEnlatado.classList.add('hidden');
+            divVencimientoMed.classList.add('hidden');
         }
     }
 
@@ -155,7 +213,6 @@
         document.getElementById('pantalla1').classList.remove('hidden');
     }
 
-    // LÓGICA DE EMPAQUE (Mostrar campo "Otro")
     function verificarOtroEmpaque() {
         const tipo = document.getElementById('tipoEmpaque').value;
         const divOtro = document.getElementById('divOtroEmpaque');
@@ -168,25 +225,38 @@
         }
     }
 
-    // MOSTRAR VENCIMIENTO SI ES ENLATADO
-    function gestionarVencimiento() {
+    // LÓGICA DE ENLATADOS (Solo pregunta Sí/No)
+    function mostrarPreguntaVencimiento() {
         const esEnlatado = document.getElementById('esEnlatado').checked;
-        const divVencimiento = document.getElementById('divVencimiento');
-        const inputVencimiento = document.getElementById('fechaVencimiento');
-
+        const divPreg = document.getElementById('divPreguntaVencimiento');
         if(esEnlatado) {
-            divVencimiento.classList.remove('hidden');
-            inputVencimiento.required = true;
+            divPreg.classList.remove('hidden');
+            document.getElementById('vencePronto').value = "No"; // Por defecto seguro
+            bloquearSiVence();
         } else {
-            divVencimiento.classList.add('hidden');
-            inputVencimiento.required = false;
-            inputVencimiento.value = ""; // Limpiar si se desmarca
+            divPreg.classList.add('hidden');
+            document.getElementById('btnGuardar').disabled = false;
+            document.getElementById('alertaVencimiento').classList.add('hidden');
         }
     }
 
-    // VERIFICACIÓN AUTOMÁTICA DE 3 MESES
-    function verificar3Meses() {
-        const fechaInput = document.getElementById('fechaVencimiento').value;
+    function bloquearSiVence() {
+        const vencePronto = document.getElementById('vencePronto').value;
+        const boton = document.getElementById('btnGuardar');
+        const alerta = document.getElementById('alertaVencimiento');
+
+        if(vencePronto === 'Sí') {
+            boton.disabled = true;
+            alerta.classList.remove('hidden');
+        } else {
+            boton.disabled = false;
+            alerta.classList.add('hidden');
+        }
+    }
+
+    // LÓGICA DE MEDICAMENTOS (Validar fecha exacta)
+    function verificarVencimientoMedicamento() {
+        const fechaInput = document.getElementById('fechaVencimientoMed').value;
         if(!fechaInput) return;
 
         const fechaSeleccionada = new Date(fechaInput);
@@ -194,19 +264,50 @@
         const tresMesesDespues = new Date(hoy.setMonth(hoy.getMonth() + 3));
 
         if (fechaSeleccionada <= tresMesesDespues) {
-            alert("❌ ATENCIÓN: El producto vence en menos de 3 meses. NO ES POSIBLE INVENTARIAR ESTOS EQUIPOS/PRODUCTOS.");
-            document.getElementById('fechaVencimiento').value = ""; // Borra la fecha incorrecta
+            alert("❌ ATENCIÓN: El medicamento vence en menos de 3 meses. NO ES POSIBLE INVENTARIAR ESTE PRODUCTO.");
+            document.getElementById('fechaVencimientoMed').value = ""; 
         }
+    }
+
+    // LÓGICA DE MÚLTIPLES EMPAQUES
+    function gestionarCantidades() {
+        const esMultiple = document.getElementById('esMultiple').checked;
+        const divSimple = document.getElementById('contenedorSimple');
+        const divMultiple = document.getElementById('contenedorMultiple');
+        const inputUnidadSimple = document.getElementById('unidades');
+        const inputMedidaSimple = document.getElementById('medida');
+
+        if(esMultiple) {
+            divSimple.classList.add('hidden');
+            divMultiple.classList.remove('hidden');
+            inputUnidadSimple.required = false;
+            inputMedidaSimple.required = false;
+        } else {
+            divSimple.classList.remove('hidden');
+            divMultiple.classList.add('hidden');
+            inputUnidadSimple.required = true;
+            inputMedidaSimple.required = true;
+        }
+    }
+
+    function agregarFilaMultiple() {
+        const contenedor = document.getElementById('listaMultiples');
+        const nuevaFila = document.createElement('div');
+        nuevaFila.className = 'flex-row fila-multiple';
+        nuevaFila.style.marginTop = '5px';
+        nuevaFila.innerHTML = `
+            <div><input type="number" class="multi-cant" placeholder="Cant." min="1"></div>
+            <div><input type="text" class="multi-med" placeholder="Medida (Ej. kg)"></div>
+        `;
+        contenedor.appendChild(nuevaFila);
     }
 
     // ENVÍO DE DATOS
     document.getElementById('formularioAcopio').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // Generar ID de máximo 4 dígitos (0001 a 9999)
         const idCorto = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // Determinar el empaque final
         let empaqueFinal = document.getElementById('tipoEmpaque').value;
         if(empaqueFinal === 'Otro') {
             empaqueFinal = document.getElementById('otroEmpaque').value;
@@ -216,7 +317,35 @@
         const esEnlatado = document.getElementById('esEnlatado').checked;
         const sufijoElemento = (cat === 'Alimentos' && esEnlatado) ? " (Enlatado)" : "";
 
-        // Cambiar estado del botón
+        // Capturar cantidades y medidas (Simple vs Múltiple)
+        let unidadesFinales = "";
+        let medidasFinales = "";
+
+        if (document.getElementById('esMultiple').checked) {
+            const cants = document.querySelectorAll('.multi-cant');
+            const meds = document.querySelectorAll('.multi-med');
+            let arregloMedidas = [];
+            
+            for(let i=0; i<cants.length; i++) {
+                if(cants[i].value && meds[i].value) {
+                    arregloMedidas.push(cants[i].value + " " + meds[i].value);
+                }
+            }
+            unidadesFinales = "Varias (Empaque mixto)";
+            medidasFinales = arregloMedidas.join(" + ");
+        } else {
+            unidadesFinales = document.getElementById('unidades').value;
+            medidasFinales = document.getElementById('medida').value;
+        }
+
+        // Determinar qué fecha guardar
+        let fechaVencFinal = "N/A";
+        if (cat === 'Medicamentos') {
+            fechaVencFinal = document.getElementById('fechaVencimientoMed').value;
+        } else if (cat === 'Alimentos' && esEnlatado) {
+            fechaVencFinal = "Vence en más de 3 meses"; 
+        }
+
         const boton = document.getElementById('btnGuardar');
         boton.textContent = '⏳ Guardando...';
         boton.classList.add('cargando');
@@ -226,13 +355,12 @@
             id: idCorto,
             fecha: new Date().toLocaleDateString('es-CO'),
             hora: new Date().toLocaleTimeString('es-CO'),
-            movimiento: document.getElementById('movimiento').value,
             categoria: cat,
             elemento: document.getElementById('elemento').value + sufijoElemento,
             tipo_empaque: empaqueFinal,
-            unidades_internas: document.getElementById('unidades').value,
-            medida_empaque: document.getElementById('medida').value,
-            fecha_vencimiento: document.getElementById('fechaVencimiento').value || "N/A",
+            unidades_internas: unidadesFinales,
+            medida_empaque: medidasFinales,
+            fecha_vencimiento: fechaVencFinal,
             responsable: document.getElementById('responsable').value,
             observaciones: document.getElementById('observaciones').value
         };
