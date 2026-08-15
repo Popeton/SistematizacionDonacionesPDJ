@@ -24,14 +24,35 @@
         
         .flex-row { display: flex; gap: 10px; align-items: center; }
         .alerta-roja { color: #d9534f; font-weight: bold; margin-top: 10px; background: #fdf2f2; padding: 10px; border-radius: 5px; border: 1px solid #d9534f;}
+
+        /* ESTILOS NUEVOS PARA LA VENTANA GIGANTE DEL ID */
+        .modal-exito { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .modal-contenido { background: white; padding: 30px 20px; border-radius: 12px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .id-gigante { font-size: 55px; font-weight: 900; color: #007bff; background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0; border: 2px dashed #007bff; letter-spacing: 5px; }
     </style>
 </head>
 <body>
 
+<!-- VENTANA GIGANTE DEL ID (Oculta por defecto) -->
+<div id="modalExito" class="modal-exito hidden">
+    <div class="modal-contenido">
+        <h2 style="color: #28a745; margin-top: 0; font-size: 28px;">✅ ¡Guardado!</h2>
+        <p style="font-size: 18px; color: #555; font-weight: bold; margin-bottom: 5px;">ID DEL PAQUETE:</p>
+        
+        <div class="id-gigante" id="idGeneradoModal">0000</div>
+        
+        <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 20px;">
+            <p style="margin: 0; font-weight: bold; font-size: 16px;">⚠️ ¡MUY IMPORTANTE!</p>
+            <p style="margin: 8px 0 0 0; font-size: 15px;">Por favor, anota este número de ID en el empaque de forma clara y visible con un marcador antes de continuar.</p>
+        </div>
+        
+        <button onclick="cerrarModalExito()" style="background-color: #28a745; color: white; border: none; padding: 15px; font-size: 18px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold;">Entendido, ya lo anoté 👍</button>
+    </div>
+</div>
+
 <div class="container">
     <h2>🤝 Juntanza Cultural Solidaria</h2>
     
-    <!-- BOTÓN PARA IR A LA PÁGINA DE CONSULTAS (ACTUALIZADO) -->
     <a href="https://popeton.github.io/SistematizacionDonacionesPDJ/consultas.html" target="_blank" style="display: block; text-align: center; background-color: #17a2b8; color: white; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-bottom: 20px;">🔍 Buscar un Empaque</a>
 
     <!-- PANTALLA 1: CATEGORÍAS -->
@@ -42,6 +63,7 @@
         <button class="btn-categoria" onclick="seleccionarCategoria('Higiene y aseo')">🧼 Higiene y Aseo</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Cobijas y Carpas')">⛺ Cobijas / Carpas</button>
         <button class="btn-categoria" onclick="seleccionarCategoria('Agua')">💧 Agua</button>
+        <button class="btn-categoria" onclick="seleccionarCategoria('Varios')">📦 Varios</button>
     </div>
 
     <!-- PANTALLA 2: FORMULARIO -->
@@ -151,6 +173,12 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz268H9EbYUUp-aDNOiy6USxqcT-b5GHkNSI9KXCgXYlL7MleihZhRLfxmHH3OzHIxs/exec';
+
+    // Función para cerrar la ventana gigante del ID
+    function cerrarModalExito() {
+        document.getElementById('modalExito').classList.add('hidden');
+        volverPantalla1();
+    }
 
     function seleccionarCategoria(cat) {
         document.getElementById('pantalla1').classList.add('hidden');
@@ -288,7 +316,6 @@
         contenedor.appendChild(nuevaFila);
     }
 
-    // ENVÍO DE DATOS EN BLOQUE A GOOGLE SHEETS
     document.getElementById('formularioAcopio').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -302,7 +329,6 @@
         const cat = document.getElementById('categoriaSeleccionada').value;
         const esEnlatado = document.getElementById('esEnlatado').checked;
         
-        // Formateo del nombre del producto
         let prefijoSalud = "";
         let sufijoEnlatado = "";
         if (cat === 'Elementos de salud') {
@@ -374,8 +400,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registrosAEnviar)
             });
-            alert("✅ Registro guardado. ID asignado: " + idCorto);
-            volverPantalla1();
+            
+            // MOSTRAR LA VENTANA GIGANTE EN VEZ DEL ALERT
+            document.getElementById('idGeneradoModal').textContent = idCorto;
+            document.getElementById('modalExito').classList.remove('hidden');
+            
         } catch(error) {
             alert("❌ Error al guardar. Revisa tu conexión a internet.");
         } finally {
